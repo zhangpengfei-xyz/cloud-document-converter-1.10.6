@@ -30,7 +30,8 @@ export default defineConfig(async cliOptions => {
     platform: 'browser',
     target: ['es2024'],
     noExternal,
-    minify: !isDev,
+    // minify: !isDev,
+    sourcemap: 'inline',
     plugins: !isDev
       ? [
           babel({
