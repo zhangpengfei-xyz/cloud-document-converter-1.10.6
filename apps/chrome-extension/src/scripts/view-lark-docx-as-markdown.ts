@@ -2,6 +2,7 @@ import i18next from 'i18next'
 import { Docx, docx, Toast } from '@dolphin/lark'
 import { generatePublicUrl, makePublicUrlEffective } from '@dolphin/lark/image'
 import { isDefined } from '@dolphin/common'
+import { inspect } from 'unist-util-inspect'
 import { CommonTranslationKey, en, Namespace, zh } from '../common/i18n'
 import { confirm } from '../common/notification'
 import { reportBug } from '../common/issue'
@@ -108,7 +109,7 @@ const main = async () => {
       const code = new URL(publicUrl).searchParams.get('code')
       if (!code) return null
 
-      image.url = publicUrl
+      // image.url = publicUrl
       return [token, code]
     })
     .filter(isDefined)
@@ -119,6 +120,9 @@ const main = async () => {
       settings[SettingKey.TableWithNonPhrasingContent] ===
       TableWithNonPhrasingContent.ToHTML,
   })
+
+  const mdStr = inspect(root, { showPositions: false })
+  console.error(mdStr)
 
   const markdown = Docx.stringify(root)
 

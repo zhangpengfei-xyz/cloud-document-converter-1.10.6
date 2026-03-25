@@ -30,9 +30,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/hast": "catalog:types",
     "@types/lodash-es": "catalog:types",
-    "@types/mdast": "catalog:types",
-    "@types/hast": "catalog:types"
+    "@types/mdast": "catalog:types"
   },
   "dependencies": {
     "@dolphin/common": "workspace:*",
@@ -42,7 +42,8 @@
     "mdast-util-gfm-table": "catalog:prod",
     "mdast-util-gfm-task-list-item": "catalog:prod",
     "mdast-util-math": "catalog:prod",
-    "mdast-util-to-markdown": "catalog:markdown"
+    "mdast-util-to-markdown": "catalog:markdown",
+    "unist-util-inspect": "^8.1.0"
   },
   "volta": {
     "extends": "../../package.json"

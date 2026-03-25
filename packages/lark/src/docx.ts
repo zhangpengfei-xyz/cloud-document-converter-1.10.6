@@ -27,6 +27,7 @@ import {
 import { resolveFileDownloadUrl } from './file'
 import isString from 'lodash-es/isString'
 import escape from 'lodash-es/escape'
+import { inspect } from 'unist-util-inspect'
 
 declare module 'mdast' {
   interface ImageData {
@@ -873,7 +874,7 @@ export const transformOperationsToPhrasingContents = (
       }
     }
 
-    if (options.highlight && (textHighlight || textHighlightBackground)) {
+    if (false && (textHighlight || textHighlightBackground)) {
       const highlighted = `<span style="color: ${textHighlight ?? 'inherit'}; background-color: ${textHighlightBackground ?? 'inherit'}">${escape(insert)}</span>`
 
       return {
@@ -1110,6 +1111,9 @@ export class Transformer {
    */
   private sequences: (string | undefined)[] = []
 
+  private level: number = 0
+  private nodeStrs: string[] = []
+
   constructor(
     public options: TransformerOptions = {
       whiteboard: false,
@@ -1141,8 +1145,8 @@ export class Transformer {
     }
     this.parent = currentParent
 
-    const flatChildren = (children: Blocks[]): Blocks[] =>
-      children
+    const flatChildren = (children: Blocks[]): Blocks[] => {
+      const res = children
         .map(child => {
           if (child.type === BlockType.GRID && this.options.flatGrid) {
             return flatChildren(
@@ -1180,8 +1184,38 @@ export class Transformer {
         })
         .flat(1)
 
+      if (res.length != children.length) {
+        this.nodeStrs.push(
+          `${'  '.repeat(this.level)}flat length ${children.length} => ${res.length}`,
+        )
+      }
+
+      return res
+    }
+
+    const resBlocks = flatChildren(block.children)
+    this.nodeStrs.push(
+      `${'  '.repeat(this.level)}flat children from ${block.children
+        .map((childBlock, idx) => `[${idx}]=${childBlock.type}`)
+        .join(' ')} to ${resBlocks
+        .map((resBlock, idx) => `[${idx}]=${resBlock.type}`)
+        .join(' ')}`,
+    )
+
     currentParent.children = transformChildren(
-      flatChildren(block.children).map(this._transform).filter(isDefined),
+      resBlocks
+        .map(blk => {
+          this.level++
+          using stack = new DisposableStack()
+          stack.defer(() => this.level--)
+
+          const res = this._transform(blk)
+          this.nodeStrs.push(
+            `${'  '.repeat(this.level)}END transform block ${blk.type} to mdast ${res?.type}`,
+          )
+          return res
+        })
+        .filter(isDefined),
     )
 
     this.parent = previousParent
@@ -1207,6 +1241,10 @@ export class Transformer {
       return contents
     }
 
+    this.nodeStrs.push(
+      `${'  '.repeat(this.level)}BEGIN transform block ${block.type}`,
+    )
+
     switch (block.type) {
       case BlockType.PAGE: {
         return this.transformParentBlock(
@@ -1230,6 +1268,15 @@ export class Transformer {
       case BlockType.HEADING4:
       case BlockType.HEADING5:
       case BlockType.HEADING6: {
+        this.nodeStrs.push(
+          `\t${'  '.repeat(this.level)}create_childops ${block.type}: ${(
+            block.zoneState?.content.ops ?? []
+          )
+            .map(op => op.insert)
+            .join('')
+            .trimEnd()}`,
+        )
+
         const depth = Number(block.type.at(-1)) as mdast.Heading['depth']
 
         const heading: mdast.Heading = {
@@ -1319,6 +1366,14 @@ export class Transformer {
       case BlockType.HEADING7:
       case BlockType.HEADING8:
       case BlockType.HEADING9: {
+        this.nodeStrs.push(
+          `\t${'  '.repeat(this.level)}create_childops ${block.type}: ${(
+            block.zoneState?.content.ops ?? []
+          )
+            .map(op => op.insert)
+            .join('')
+            .trimEnd()}`,
+        )
         const paragraph: mdast.Paragraph = {
           type: 'paragraph',
           children: createChildrenFromOps(),
@@ -1326,17 +1381,22 @@ export class Transformer {
         return paragraph
       }
       case BlockType.IMAGE: {
+        this.nodeStrs.push(
+          `\t${'  '.repeat(this.level)}image token ${block.snapshot.image.token}`,
+        )
         const imageBlockToImage = (block: ImageBlock) => {
           const { caption, name, token } = block.snapshot.image
           const image: mdast.Image = {
             type: 'image',
             url: '',
-            alt: evaluateAlt(caption),
+            alt: token, // evaluateAlt(caption),
+            /*
             data: {
               name,
               token,
               fetchSources: () => fetchImageSources(block),
             },
+             */
           }
           return image
         }
@@ -1598,12 +1658,14 @@ export class Transformer {
         return null
       }
       default:
+        this.nodeStrs.push(`ERROR cannot process block ${block.type}`)
         return null
     }
   }
 
   transform<T extends Blocks>(block: T): TransformResult<Mutate<T>> {
     const node = this._transform(block) as Mutate<T>
+    console.error(this.nodeStrs.join('\n'))
 
     const result: TransformResult<Mutate<T>> = {
       root: node,
@@ -1648,7 +1710,8 @@ export class Docx {
         return false
       }
 
-      return await PageMain.locateBlockWithRecordIdImpl(recordId)
+      // return await PageMain.locateBlockWithRecordIdImpl(recordId)
+      return true
     } catch (error) {
       console.error(error)
     }
@@ -1757,6 +1820,8 @@ export class Docx {
         Docx.locateBlockWithRecordId(recordId),
       ...transformerOptions,
     })
+
+    // console.error(inspect(this.rootBlock, { showPositions: false }))
 
     return transformer.transform(this.rootBlock)
   }
