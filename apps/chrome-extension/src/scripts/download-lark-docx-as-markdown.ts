@@ -692,6 +692,7 @@ const main = async (options: { signal?: AbortSignal } = {}) => {
       fileName: filename,
     })
   }
+  console.error('I confirm download')
 }
 
 let controller = new AbortController()

@@ -122,12 +122,15 @@ const main = async () => {
 
   const markdown = Docx.stringify(root)
 
+  /*
   if (!window.document.hasFocus()) {
     const confirmed = await confirm()
     if (!confirmed) {
       return
     }
   }
+   */
+  console.error('I confirm view')
 
   const previewWindow = window.open('', '_blank', 'width=800,height=600')
 

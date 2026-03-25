@@ -48,7 +48,7 @@ export interface Settings {
 export const fallbackSettings: Settings = {
   [SettingKey.Locale]: 'en-US',
   [SettingKey.Theme]: Theme.System,
-  [SettingKey.DownloadMethod]: supported
+  [SettingKey.DownloadMethod]: false // supported
     ? DownloadMethod.ShowSaveFilePicker
     : DownloadMethod.Direct,
   [SettingKey.TableWithNonPhrasingContent]: TableWithNonPhrasingContent.ToHTML,
