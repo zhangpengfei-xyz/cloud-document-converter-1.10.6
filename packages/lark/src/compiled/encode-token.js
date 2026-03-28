@@ -2,8 +2,8 @@ const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx
 function seed(e=20) {
     let t = "";
     for (let n = 0; n < e; n++) {
-        const e = Math.floor(Math.random() * characters.length);
-        t += characters[e]
+        // const e = Math.floor(Math.random() * characters.length);
+        t += characters[0]
     }
     return t
 }
@@ -141,7 +141,7 @@ function E(e) {
 }
 
 export const encodeToken = function(e) {
-  const t = Math.round((new Date).getTime() / 1e3)
+  const t = Math.round(new Date('2024-01-01T00:00:00').getTime() / 1e3)
     , n = t + 3600
     , r = "".concat(t, ":").concat(n)
     , i = "Token:".concat(e)

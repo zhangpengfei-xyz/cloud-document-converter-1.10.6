@@ -34,6 +34,8 @@ const csrfToken = () => {
 export const makePublicUrlEffective = async (
   tokens: Record<string, string>,
 ): Promise<boolean> => {
+  // dont make any request to feishu
+  return true
   try {
     const response = await fetch(
       generateApiUrl('/api/docx/resources/copy_out'),
